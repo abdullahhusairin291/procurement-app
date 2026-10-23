@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}RFQ Masuk{% endblock %}
+{% block content %}
+<h4 class="mb-3">RFQ untuk {{ current_user.vendor.name }}</h4>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>RFQ</th><th>Batas penawaran</th><th>Status RFQ</th><th>Penawaran Anda</th></tr></thead>
+  <tbody>
+  {% for r in rows %}{% set q = mine[r.id] %}
+    <tr><td><a href="{{ url_for('vendor.rfq_detail', rfq_id=r.id) }}">{{ r.number }}</a></td><td>{{ r.deadline|tglwaktu }}</td><td>{{ badge(r.status) }}</td>
+    <td>{% if q %}{{ badge(q.status) }} {{ q.total|rupiah }}{% else %}<span class="text-muted">Belum menawar</span>{% endif %}</td></tr>
+  {% else %}{{ empty(4, 'Belum ada RFQ untuk Anda.') }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

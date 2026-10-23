@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block content %}
+<h4>{{ 'Ubah' if obj else 'Tambah' }} {{ cfg.title }}</h4>
+<div class="row"><div class="col-lg-6">
+<form method="post" class="card card-body">
+  {{ csrf() }}
+  {% for f in cfg.fields %}
+    {% set cur = (obj|attr(f.name)) if obj else (defaults.get(f.name)) %}
+    <div class="mb-3">
+      <label class="form-label">{{ f.label }}{% if f.required %} *{% endif %}</label>
+      {% if f.kind == 'textarea' %}
+        <textarea class="form-control" name="{{ f.name }}" rows="3">{{ cur or '' }}</textarea>
+      {% elif f.kind == 'select' %}
+        <select class="form-select" name="{{ f.name }}">
+          <option value="">-</option>
+          {% for value, label in f.options() %}<option value="{{ value }}" {{ 'selected' if cur == value }}>{{ label }}</option>{% endfor %}
+        </select>
+      {% elif f.kind == 'money' %}
+        <input class="form-control" name="{{ f.name }}" inputmode="decimal" value="{{ cur if cur is not none else '' }}">
+      {% else %}
+        <input class="form-control" name="{{ f.name }}" value="{{ cur if cur is not none else '' }}">
+      {% endif %}
+    </div>
+  {% endfor %}
+  <div><button class="btn btn-primary">Simpan</button> <a class="btn btn-link" href="{{ url_for('master.entity_list', entity=entity) }}">Batal</a></div>
+</form>
+</div></div>
+{% endblock %}

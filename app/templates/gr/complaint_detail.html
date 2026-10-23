@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge %}
+{% block title %}Komplain {{ c.po.number }}{% endblock %}
+{% block content %}
+<h4>Komplain PO {{ c.po.number }} {{ badge(c.status) }}</h4>
+<div class="text-muted mb-3">Vendor {{ c.po.vendor.name }} &middot; GR {{ c.gr.number }} &middot; dibuat {{ c.created_at|tglwaktu }} oleh {{ c.created_by.full_name }}</div>
+<div class="card mb-3"><div class="card-body"><strong>Alasan:</strong> {{ c.reason }}
+  {% if c.evidence_path %}<br><a href="{{ url_for('main.attachment', kind='complaint', obj_id=c.id) }}">Unduh bukti ({{ c.evidence_name }})</a>{% endif %}
+  {% if c.followup_note %}<hr><strong>Tindak lanjut ({{ c.followup_by.full_name }}, {{ c.followup_at|tglwaktu }}):</strong> {{ c.followup_note }}{% endif %}
+  {% if c.resend_at %}<hr><strong>Vendor mengirim ulang {{ c.resend_at|tglwaktu }}</strong>{% if c.resend_note %}: {{ c.resend_note }}{% endif %}{% endif %}</div></div>
+{% if current_user.role == C.SP and c.status == C.C_OPEN %}
+<form method="post" action="{{ url_for('gr.complaint_followup', complaint_id=c.id) }}" class="card card-body">
+  {{ csrf() }}<label class="form-label">Tindak lanjut ke vendor (retur/perbaikan/penggantian) *</label>
+  <textarea class="form-control mb-3" name="note" rows="3"></textarea><div><button class="btn btn-primary">Teruskan ke vendor</button></div></form>
+{% endif %}
+{% if current_user.role == C.GD and c.status in (C.C_OPEN, C.C_FOLLOWED) %}<div class="alert alert-info">Menunggu vendor mengirim ulang. Pemeriksaan baru dapat dilakukan setelah itu.</div>{% endif %}
+<a class="btn btn-link" href="{{ url_for('gr.complaints') }}">Kembali</a>
+{% endblock %}

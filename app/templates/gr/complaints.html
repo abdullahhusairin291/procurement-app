@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}Komplain{% endblock %}
+{% block content %}
+<h4 class="mb-3">Komplain dan retur</h4>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>Tanggal</th><th>PO</th><th>Vendor</th><th>Alasan</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for c in rows %}<tr><td>{{ c.created_at|tgl }}</td><td>{{ c.po.number }}</td><td>{{ c.po.vendor.name }}</td><td>{{ c.reason[:90] }}</td><td>{{ badge(c.status) }}</td>
+    <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('gr.complaint_detail', complaint_id=c.id) }}">Buka</a></td></tr>
+  {% else %}{{ empty(6, 'Tidak ada komplain.') }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

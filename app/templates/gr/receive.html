@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge %}
+{% block title %}Penerimaan {{ po.number }}{% endblock %}
+{% block content %}
+<h4>Pemeriksaan penerimaan {{ po.number }} {{ badge(po.status) }}</h4>
+<div class="text-muted mb-3">Vendor {{ po.vendor.name }} &middot; surat jalan <strong>{{ po.delivery_note_no or '-' }}</strong> &middot; estimasi tiba {{ po.eta|tgl }}.
+  Cocokkan jumlah, kondisi, dan spesifikasi dengan PO dan surat jalan.</div>
+<form method="post" enctype="multipart/form-data">
+{{ csrf() }}
+<div class="card mb-3"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+  <thead><tr><th>Barang/Jasa</th><th>Spesifikasi PO</th><th class="text-end">Qty PO</th><th class="text-end">Sisa belum diterima</th><th>Qty diterima</th><th>Hasil</th><th>Catatan (wajib bila tidak sesuai)</th></tr></thead>
+  <tbody>
+  {% for i in po.items %}{% set rem = i.remaining_qty %}
+    <tr><td>{{ i.item.name }}</td><td class="small">{{ i.spec or '-' }}</td><td class="text-end">{{ i.qty|qty }}</td><td class="text-end">{{ rem|qty }} {{ i.item.unit.name }}</td>
+    {% if rem > 0 %}
+      <td><input class="form-control form-control-sm" style="width:100px" name="qty_{{ i.id }}" inputmode="decimal" value="{{ f.get('qty_' ~ i.id, rem|qty) }}"></td>
+      <td><select class="form-select form-select-sm" name="result_{{ i.id }}"><option>{{ C.RES_OK }}</option><option {{ 'selected' if f.get('result_' ~ i.id) == C.RES_BAD }}>{{ C.RES_BAD }}</option></select></td>
+      <td><input class="form-control form-control-sm" name="note_{{ i.id }}" value="{{ f.get('note_' ~ i.id, '') }}"></td>
+    {% else %}<td colspan="3" class="text-success">Sudah diterima penuh</td>{% endif %}</tr>
+  {% endfor %}
+  </tbody></table></div></div>
+<div class="card card-body mb-3"><div class="row g-3">
+  <div class="col-md-3"><label class="form-label">Tanggal terima</label><input class="form-control" type="date" name="received_date" max="{{ today }}" value="{{ today }}"></div>
+  <div class="col-md-9"><label class="form-label">Catatan penerimaan</label><input class="form-control" name="note" value="{{ f.get('note', '') }}"></div>
+  <div class="col-md-6"><label class="form-label">Keterangan komplain tambahan (bila ada item tidak sesuai)</label><input class="form-control" name="complaint_reason" value="{{ f.get('complaint_reason', '') }}"></div>
+  <div class="col-md-6"><label class="form-label">Bukti (foto/PDF, opsional)</label><input class="form-control" type="file" name="evidence" accept=".pdf,.png,.jpg,.jpeg"></div>
+</div></div>
+<button class="btn btn-primary">Simpan Goods Receipt</button> <a class="btn btn-link" href="{{ url_for('gr.waiting') }}">Batal</a>
+</form>
+{% endblock %}

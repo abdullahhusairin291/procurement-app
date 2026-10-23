@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}{{ gr.number }}{% endblock %}
+{% block content %}
+<h4>{{ gr.number }} {{ badge(gr.status) }}</h4>
+<div class="text-muted mb-3">PO {% if current_user.role != C.GD %}<a href="{{ url_for('po.detail', po_id=gr.po_id) }}">{{ gr.po.number }}</a>{% else %}{{ gr.po.number }}{% endif %} &middot; {{ gr.po.vendor.name }} &middot; diterima {{ gr.received_date|tgl }} oleh {{ gr.received_by.full_name }}
+  {% if gr.verified_at %}&middot; diverifikasi {{ gr.verified_by.full_name }} {{ gr.verified_at|tglwaktu }}{% endif %}</div>
+{% if gr.note %}<p>{{ gr.note }}</p>{% endif %}
+<table class="table table-sm bg-white"><thead><tr><th>Barang/Jasa</th><th class="text-end">Qty diterima</th><th>Hasil</th><th>Catatan</th></tr></thead><tbody>
+  {% for i in gr.items %}<tr><td>{{ i.po_item.item.name }}</td><td class="text-end">{{ i.qty_received|qty }}</td><td>{{ badge(i.result) }}</td><td>{{ i.note or '-' }}</td></tr>{% endfor %}</tbody></table>
+{% for c in gr.complaints %}<a class="btn btn-sm btn-outline-danger" href="{{ url_for('gr.complaint_detail', complaint_id=c.id) }}">Lihat komplain ({{ c.status }})</a>{% endfor %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Master Data{% endblock %}
+{% block content %}
+<h4 class="mb-3">Master Data</h4>
+<div class="list-group" style="max-width:420px">
+  {% for key, cfg in masters.items() %}
+  <a class="list-group-item list-group-item-action" href="{{ url_for('master.entity_list', entity=key) }}">{{ cfg.title }}</a>
+  {% endfor %}
+</div>
+{% endblock %}

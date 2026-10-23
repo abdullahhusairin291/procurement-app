@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Periksa hasil OCR{% endblock %}
+{% block content %}
+<h4>Periksa hasil ekstraksi - {{ rv.vendor.name }}</h4>
+<div class="alert alert-warning">Hasil ekstraksi otomatis bisa keliru. <strong>Periksa kembali setiap angka sebelum menyimpan.</strong> Metode: {{ method }}. Tidak ada yang tersimpan sebelum Anda menekan Simpan.</div>
+{% for w in warnings %}<div class="alert alert-danger py-2">{{ w }}</div>{% endfor %}
+{% if unmatched %}<div class="alert alert-secondary py-2">Baris dokumen yang tidak cocok dengan item RFQ: {% for r in unmatched %}"{{ r.name }}"{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+<form method="post" action="{{ url_for('rfq.quotation', rfq_id=rfq.id, vendor_id=rv.vendor_id) }}" enctype="multipart/form-data" class="card card-body mb-3">
+  {{ csrf() }}
+  <input type="hidden" name="via" value="OCR">
+  <input type="hidden" name="ocr_file" value="{{ stored }}">
+  <input type="hidden" name="ocr_name" value="{{ original }}">
+  {% include "_quotation_fields.html" %}
+  <p class="small text-muted">Dokumen asli ({{ original }}) akan dilampirkan pada penawaran ini.</p>
+  <div><button class="btn btn-primary">Simpan penawaran</button> <a class="btn btn-link" href="{{ url_for('ocr.upload', rfq_id=rfq.id) }}">Ulangi</a></div>
+</form>
+<details><summary>Teks mentah hasil OCR</summary><pre class="raw mt-2">{{ raw_text }}</pre></details>
+{% endblock %}

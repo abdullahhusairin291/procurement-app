@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}Daftar PO{% endblock %}
+{% block content %}
+<h4 class="mb-3">Purchase Order</h4>
+<form class="row g-2 mb-3" method="get"><div class="col-md-3"><select class="form-select" name="status" onchange="this.form.submit()"><option value="">Semua status</option>
+  {% for s in statuses %}<option {{ 'selected' if s == status }}>{{ s }}</option>{% endfor %}</select></div></form>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>PO</th><th>Tanggal</th><th>PR</th><th>Vendor</th><th>Gudang</th><th class="text-end">Total</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for p in rows %}<tr><td><a href="{{ url_for('po.detail', po_id=p.id) }}">{{ p.number }}</a></td><td>{{ p.created_at|tgl }}</td><td>{{ p.pr.number }}</td><td>{{ p.vendor.name }}</td><td>{{ p.warehouse.name }}</td><td class="text-end">{{ p.total|rupiah }}</td><td>{{ badge(p.status) }}</td></tr>
+  {% else %}{{ empty(7) }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

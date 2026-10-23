@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, empty %}
+{% block title %}Notifikasi{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h4>Notifikasi</h4>
+  <form method="post" action="{{ url_for('main.notifications_read_all') }}">{{ csrf() }}<button class="btn btn-sm btn-outline-secondary">Tandai semua dibaca</button></form>
+</div>
+<table class="table table-hover bg-white">
+  <thead><tr><th>Waktu</th><th>Pesan</th><th></th></tr></thead>
+  <tbody>
+  {% for n in rows %}
+    <tr class="{% if not n.is_read %}table-warning{% endif %}">
+      <td class="text-nowrap">{{ n.created_at|tglwaktu }}</td><td>{{ n.message }}</td>
+      <td class="text-end">
+        <form method="post" action="{{ url_for('main.notification_open', notif_id=n.id) }}">{{ csrf() }}
+          <button class="btn btn-sm btn-outline-primary">{{ 'Buka' if n.link else 'Tandai dibaca' }}</button></form>
+      </td>
+    </tr>
+  {% else %}{{ empty(3, 'Belum ada notifikasi.') }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

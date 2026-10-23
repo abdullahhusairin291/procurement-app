@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}{{ 'Ubah' if pr else 'Buat' }} PR{% endblock %}
+{% block content %}
+{% macro row(r) %}
+<tr>
+  <td><select class="form-select form-select-sm" name="item_id">
+    <option value="">- pilih -</option>
+    {% for it in catalog %}<option value="{{ it.id }}" data-price="{{ it.ref_price|int }}" data-unit="{{ it.unit.name }}" {{ 'selected' if r and r.item_id|string == it.id|string }}>{{ it.code }} - {{ it.name }}</option>{% endfor %}
+  </select></td>
+  <td><input class="form-control form-control-sm" name="spec" value="{{ r.spec if r else '' }}"></td>
+  <td><input class="form-control form-control-sm" name="qty" inputmode="decimal" value="{{ r.qty if r else '' }}" style="width:90px"></td>
+  <td class="unit small text-muted"></td>
+  <td><input class="form-control form-control-sm" name="price" inputmode="decimal" value="{{ r.price if r else '' }}" style="width:140px"></td>
+  <td class="subtotal text-end text-nowrap">Rp 0</td>
+  <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button></td>
+</tr>
+{% endmacro %}
+<h4>{{ 'Ubah ' ~ pr.number if pr else 'Buat Purchase Request' }}</h4>
+{% if revision_note %}<div class="alert alert-warning"><strong>Catatan atasan:</strong> {{ revision_note.note }} <small>({{ revision_note.actor.full_name }}, {{ revision_note.created_at|tglwaktu }})</small></div>{% endif %}
+<form method="post">
+  {{ csrf() }}
+  <div class="card mb-3"><div class="card-body row g-3">
+    <div class="col-md-3"><label class="form-label">Departemen</label><input class="form-control" value="{{ current_user.department.name }}" disabled></div>
+    <div class="col-md-3"><label class="form-label">Tanggal dibutuhkan *</label><input class="form-control" type="date" name="needed_date" min="{{ min_date }}" value="{{ needed_value }}"></div>
+    <div class="col-md-6"><label class="form-label">Justifikasi kebutuhan *</label><textarea class="form-control" name="justification" rows="2">{{ just_value }}</textarea></div>
+  </div></div>
+  <div class="card mb-3"><div class="card-header">Item barang/jasa</div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead><tr><th style="min-width:260px">Barang/Jasa</th><th>Spesifikasi</th><th>Qty</th><th>Satuan</th><th>Estimasi harga satuan</th><th class="text-end">Subtotal</th><th></th></tr></thead>
+      <tbody id="item-rows">{% for r in rows %}{{ row(r) }}{% endfor %}</tbody>
+      <tfoot><tr><td colspan="5" class="text-end fw-bold">Total estimasi</td><td class="text-end fw-bold text-nowrap" id="grand-total">Rp 0</td><td></td></tr></tfoot>
+    </table></div>
+    <div class="card-body"><button type="button" class="btn btn-sm btn-outline-secondary" id="add-row">+ Tambah baris</button></div>
+  </div>
+  <template id="item-row-template">{{ row(None) }}</template>
+  <button class="btn btn-secondary" name="action" value="draft">Simpan sebagai draft</button>
+  <button class="btn btn-primary" name="action" value="submit">Simpan &amp; ajukan</button>
+  <a class="btn btn-link" href="{{ url_for('pr.detail', pr_id=pr.id) if pr else url_for('pr.index') }}">Batal</a>
+</form>
+{% endblock %}

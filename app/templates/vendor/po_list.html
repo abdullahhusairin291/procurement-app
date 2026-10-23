@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}PO Saya{% endblock %}
+{% block content %}
+<h4 class="mb-3">Purchase Order untuk {{ current_user.vendor.name }}</h4>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>PO</th><th>Terbit</th><th>Gudang tujuan</th><th class="text-end">Total</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for p in rows %}<tr><td><a href="{{ url_for('vendor.po_detail', po_id=p.id) }}">{{ p.number }}</a></td><td>{{ p.issued_at|tgl }}</td><td>{{ p.warehouse.name }}</td><td class="text-end">{{ p.total|rupiah }}</td><td>{{ badge(p.status) }}</td></tr>
+  {% else %}{{ empty(5, 'Belum ada PO.') }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, post_button, history_table %}
+{% block title %}{{ pr.number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div><h4 class="mb-1">{{ pr.number }} {{ badge(pr.status) }}</h4>
+    <div class="text-muted">Pemohon: {{ pr.requester.full_name }} &middot; {{ pr.department.name }} &middot; dibuat {{ pr.created_at|tglwaktu }}</div></div>
+  <div>
+    {% if is_owner and pr.status in (C.PR_DRAFT, C.PR_REVISION) %}
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('pr.edit', pr_id=pr.id) }}">Ubah</a>
+      {{ post_button(url_for('pr.submit', pr_id=pr.id), 'Ajukan' if pr.status == C.PR_DRAFT else 'Ajukan ulang') }}
+    {% endif %}
+    {% if is_owner and pr.status == C.PR_DRAFT %}{{ post_button(url_for('pr.delete', pr_id=pr.id), 'Hapus draft', 'btn-outline-danger', 'Hapus draft ini?') }}{% endif %}
+    {% if current_user.role == C.SP and pr.status == C.PR_APPROVED and not rfqs %}
+      <a class="btn btn-sm btn-success" href="{{ url_for('rfq.new', pr_id=pr.id) }}">Verifikasi &amp; buat RFQ</a>
+    {% endif %}
+  </div>
+</div>
+{% if revision_note %}<div class="alert alert-warning"><strong>Perlu revisi:</strong> {{ revision_note.note }} <small>({{ revision_note.actor.full_name }})</small></div>{% endif %}
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card mb-3"><div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Tanggal dibutuhkan</dt><dd class="col-sm-9">{{ pr.needed_date|tgl }}</dd>
+        <dt class="col-sm-3">Justifikasi</dt><dd class="col-sm-9">{{ pr.justification or '-' }}</dd>
+        {% if pr.verified_at %}<dt class="col-sm-3">Verifikasi</dt><dd class="col-sm-9">{{ pr.verified_by.full_name }}, {{ pr.verified_at|tglwaktu }} ({{ pr.procurement_method }}){% if pr.verification_note %} - {{ pr.verification_note }}{% endif %}</dd>{% endif %}
+      </dl></div></div>
+    <div class="card mb-3"><div class="table-responsive"><table class="table table-sm mb-0">
+      <thead><tr><th>Barang/Jasa</th><th>Spesifikasi</th><th class="text-end">Qty</th><th>Satuan</th><th class="text-end">Est. harga</th><th class="text-end">Subtotal</th></tr></thead>
+      <tbody>{% for i in pr.items %}<tr><td>{{ i.item.code }} - {{ i.item.name }}</td><td>{{ i.spec or '-' }}</td><td class="text-end">{{ i.qty|qty }}</td><td>{{ i.item.unit.name }}</td><td class="text-end">{{ i.est_price|rupiah }}</td><td class="text-end">{{ i.subtotal|rupiah }}</td></tr>{% else %}<tr><td colspan="6" class="text-muted text-center">Belum ada item.</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><th colspan="5" class="text-end">Total</th><th class="text-end">{{ pr.total|rupiah }}</th></tr></tfoot>
+    </table></div></div>
+    <div class="card mb-3"><div class="card-header">Riwayat approval</div><div class="card-body p-0">{{ history_table(history) }}</div></div>
+    {% if rfqs or pos %}
+    <div class="card mb-3"><div class="card-header">Dokumen terkait</div><ul class="list-group list-group-flush">
+      {% for r in rfqs %}<li class="list-group-item">RFQ {% if can_follow %}<a href="{{ url_for('rfq.detail', rfq_id=r.id) }}">{{ r.number }}</a>{% else %}{{ r.number }}{% endif %} {{ badge(r.status) }}</li>{% endfor %}
+      {% for p in pos %}<li class="list-group-item">PO {% if can_follow %}<a href="{{ url_for('po.detail', po_id=p.id) }}">{{ p.number }}</a>{% else %}{{ p.number }}{% endif %} {{ badge(p.status) }} - {{ p.vendor.name }}
+        {% for g in p.receipts %}<div class="ms-3 small">GR {{ g.number }} {{ badge(g.status) }}</div>{% endfor %}</li>{% endfor %}
+    </ul></div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card mb-3"><div class="card-header">Anggaran {{ pr.department.name }} {{ pr.period }}</div><div class="card-body small">
+      {% if budget[0] is none %}<span class="text-danger">Belum ditetapkan.</span>{% else %}
+      Pagu: {{ budget[0]|rupiah }}<br>Terpakai (PR disetujui/diproses/selesai): {{ budget[1]|rupiah }}<br><strong>Sisa: {{ budget[2]|rupiah }}</strong>{% endif %}
+    </div></div>
+    <div class="card"><div class="card-header">Linimasa status</div><div class="card-body">
+      <ul class="timeline mb-0">{% for at, text in events %}<li><div>{{ text }}</div><small class="text-muted">{{ at|tglwaktu }}</small></li>{% endfor %}</ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

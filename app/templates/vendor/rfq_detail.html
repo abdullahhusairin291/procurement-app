@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge %}
+{% block title %}{{ rfq.number }}{% endblock %}
+{% block content %}
+<h4>{{ rfq.number }} {{ badge(rfq.status) }}</h4>
+<div class="text-muted mb-3">Batas waktu penawaran: {{ rfq.deadline|tglwaktu }}</div>
+{% if rfq.terms %}<div class="alert alert-secondary"><strong>Syarat:</strong> {{ rfq.terms }}</div>{% endif %}
+{% if q %}<div class="alert alert-info">Penawaran Anda: {{ badge(q.status) }} total {{ q.total|rupiah }} (dikirim {{ q.submitted_at|tglwaktu }}){% if not q.is_complete %} - <strong>belum lengkap</strong>{% endif %}</div>{% endif %}
+{% if open_for_quote %}
+<form method="post" action="{{ url_for('vendor.rfq_quote', rfq_id=rfq.id) }}" enctype="multipart/form-data" class="card card-body">
+  {{ csrf() }}
+  <h6>{{ 'Ubah penawaran' if q else 'Kirim penawaran' }}</h6>
+  {% include "_quotation_fields.html" %}
+  <div class="mb-3"><label class="form-label">Lampiran (PDF/PNG/JPG, opsional)</label><input class="form-control" type="file" name="attachment" accept=".pdf,.png,.jpg,.jpeg"></div>
+  <div><button class="btn btn-primary">Kirim penawaran</button></div>
+</form>
+{% else %}
+<div class="card mb-3"><table class="table table-sm mb-0"><thead><tr><th>Barang/Jasa</th><th class="text-end">Qty</th><th class="text-end">Harga Anda</th></tr></thead><tbody>
+  {% for ri in rfq.items %}{% set qi = q.price_for(ri.id) if q else none %}
+  <tr><td>{{ ri.item.name }}</td><td class="text-end">{{ ri.qty|qty }} {{ ri.item.unit.name }}</td><td class="text-end">{{ qi.unit_price|rupiah if qi else '-' }}</td></tr>{% endfor %}</tbody></table></div>
+<div class="alert alert-warning">Penawaran sudah ditutup (batas waktu lewat atau pemenang telah ditetapkan).</div>
+{% endif %}
+<a class="btn btn-link" href="{{ url_for('vendor.rfq_index') }}">Kembali</a>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}{{ 'Ubah' if po else 'Buat' }} PO{% endblock %}
+{% block content %}
+<h4>{{ 'Ubah ' ~ po.number if po else 'Buat PO dari ' ~ rfq.number }}</h4>
+<div class="text-muted mb-3">Vendor pemenang: <strong>{{ winner.vendor.name }}</strong>. Item dan harga disalin dari penawaran dan tidak dapat diubah di sini.</div>
+<div class="card mb-3"><table class="table table-sm mb-0"><thead><tr><th>Barang/Jasa</th><th class="text-end">Qty</th><th class="text-end">Harga</th><th class="text-end">Subtotal</th></tr></thead><tbody>
+  {% for ri in rfq.items %}{% set qi = winner.price_for(ri.id) %}<tr><td>{{ ri.item.name }}</td><td class="text-end">{{ ri.qty|qty }} {{ ri.item.unit.name }}</td><td class="text-end">{{ qi.unit_price|rupiah }}</td><td class="text-end">{{ qi.subtotal|rupiah }}</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end">{{ winner.total|rupiah }}</th></tr></tfoot></table></div>
+<form method="post" class="card card-body"><div class="row g-3">
+  {{ csrf() }}
+  <div class="col-md-4"><label class="form-label">Gudang tujuan *</label><select class="form-select" name="warehouse_id" required><option value="">-</option>
+    {% for w in warehouses %}<option value="{{ w.id }}" {{ 'selected' if po and po.warehouse_id == w.id }}>{{ w.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-4"><label class="form-label">Jadwal kirim *</label><input class="form-control" type="date" name="delivery_date" min="{{ min_date }}" value="{{ po.delivery_date.isoformat() if po else '' }}" required></div>
+  <div class="col-md-4"><label class="form-label">Syarat pembayaran</label><input class="form-control" name="payment_terms" value="{{ default_terms or '' }}"></div>
+  <div class="col-12"><label class="form-label">Catatan</label><textarea class="form-control" name="notes" rows="2">{{ po.notes if po and po.notes else '' }}</textarea></div>
+  <div class="col-12"><button class="btn btn-primary">Simpan</button> <a class="btn btn-link" href="{{ url_for('po.detail', po_id=po.id) if po else url_for('rfq.detail', rfq_id=rfq.id) }}">Batal</a></div>
+</div></form>
+{% endblock %}

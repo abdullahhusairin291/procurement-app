@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}Laporan PO{% endblock %}
+{% block content %}
+<h4 class="mb-3">Laporan Purchase Order</h4>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-2"><input class="form-control" type="date" name="date_from" value="{{ f.get('date_from','') }}"></div>
+  <div class="col-md-2"><input class="form-control" type="date" name="date_to" value="{{ f.get('date_to','') }}"></div>
+  <div class="col-md-2"><select class="form-select" name="department_id"><option value="">Semua departemen</option>
+    {% for d in departments %}<option value="{{ d.id }}" {{ 'selected' if f.get('department_id') == d.id|string }}>{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select class="form-select" name="vendor_id"><option value="">Semua vendor</option>
+    {% for v in vendors %}<option value="{{ v.id }}" {{ 'selected' if f.get('vendor_id') == v.id|string }}>{{ v.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select class="form-select" name="status"><option value="">Semua status</option>{% for s in statuses %}<option {{ 'selected' if f.get('status') == s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><button class="btn btn-outline-primary">Tampilkan</button> <button class="btn btn-outline-success" name="export" value="csv">CSV</button></div>
+</form>
+<table class="table table-sm bg-white"><thead><tr><th>PO</th><th>Tanggal</th><th>PR</th><th>Departemen</th><th>Vendor</th><th>Status</th><th class="text-end">Total</th></tr></thead><tbody>
+  {% for r in rows %}<tr><td><a href="{{ url_for('po.detail', po_id=r.id) }}">{{ r.number }}</a></td><td>{{ r.created_at|tgl }}</td><td>{{ r.pr.number }}</td><td>{{ r.pr.department.name }}</td><td>{{ r.vendor.name }}</td><td>{{ badge(r.status) }}</td><td class="text-end">{{ r.total|rupiah }}</td></tr>
+  {% else %}{{ empty(7) }}{% endfor %}</tbody>
+  <tfoot><tr><th colspan="6" class="text-end">{{ rows|length }} PO, total</th><th class="text-end">{{ total|rupiah }}</th></tr></tfoot></table>
+{% endblock %}

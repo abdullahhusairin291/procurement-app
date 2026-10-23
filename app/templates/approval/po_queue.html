@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import empty %}
+{% block title %}Approval PO{% endblock %}
+{% block content %}
+<h4 class="mb-3">Antrian approval PO</h4>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>Nomor</th><th>Diajukan</th><th>Vendor</th><th class="text-end">Total</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}<tr><td>{{ r.number }}</td><td>{{ r.submitted_at|tglwaktu }}</td><td>{{ r.vendor.name }}</td><td class="text-end">{{ r.total|rupiah }}</td>
+    <td><a class="btn btn-sm btn-primary" href="{{ url_for('approval.po_review', po_id=r.id) }}">Tinjau</a></td></tr>
+  {% else %}{{ empty(5, 'Tidak ada PO yang menunggu approval.') }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

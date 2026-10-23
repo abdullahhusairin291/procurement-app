@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_Procurement" targetNamespace="http://procurement.example.com/bpmn" exporter="procurement-generator" exporterVersion="1.0">
+  <collaboration id="Collaboration_Procurement">
+    <participant id="Participant_Procurement" name="Proses Pengadaan Barang/Jasa (Procurement)" processRef="Process_Procurement" />
+  </collaboration>
+  <process id="Process_Procurement" name="Proses Pengadaan Barang/Jasa" isExecutable="false">
+    <laneSet id="LaneSet_Procurement">
+      <lane id="Lane_Pemohon" name="Pemohon (Departemen User)">
+        <flowNodeRef>Start_Kebutuhan</flowNodeRef>
+        <flowNodeRef>Task_BuatPR</flowNodeRef>
+      </lane>
+      <lane id="Lane_Atasan" name="Atasan Pemohon (Kepala Departemen)">
+        <flowNodeRef>Task_ReviewPR</flowNodeRef>
+        <flowNodeRef>Gateway_PRDisetujui</flowNodeRef>
+        <flowNodeRef>End_PRDitolak</flowNodeRef>
+      </lane>
+      <lane id="Lane_ManajerProc" name="Manajer Procurement">
+        <flowNodeRef>Task_ReviewPO</flowNodeRef>
+        <flowNodeRef>Gateway_PODisetujui</flowNodeRef>
+      </lane>
+      <lane id="Lane_StafProc" name="Staf Procurement (Purchasing)">
+        <flowNodeRef>Task_VerifikasiPR</flowNodeRef>
+        <flowNodeRef>Task_BuatKirimRFQ</flowNodeRef>
+        <flowNodeRef>Task_EvaluasiPenawaran</flowNodeRef>
+        <flowNodeRef>Task_BuatPO</flowNodeRef>
+        <flowNodeRef>Task_KirimPO</flowNodeRef>
+        <flowNodeRef>Task_ReturKomplain</flowNodeRef>
+        <flowNodeRef>Task_TutupPO</flowNodeRef>
+        <flowNodeRef>End_Selesai</flowNodeRef>
+      </lane>
+      <lane id="Lane_Vendor" name="Vendor / Supplier">
+        <flowNodeRef>Task_VendorPenawaran</flowNodeRef>
+        <flowNodeRef>Task_VendorKonfirmasiPO</flowNodeRef>
+        <flowNodeRef>Task_VendorKirimBarang</flowNodeRef>
+      </lane>
+      <lane id="Lane_Gudang" name="Gudang (Penerimaan Barang)">
+        <flowNodeRef>Task_TerimaBarang</flowNodeRef>
+        <flowNodeRef>Gateway_BarangSesuai</flowNodeRef>
+        <flowNodeRef>Task_BuatGR</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="Start_Kebutuhan" name="Kebutuhan barang/jasa muncul">
+      <documentation>Departemen membutuhkan barang atau jasa yang belum tersedia.</documentation>
+      <outgoing>Flow_01</outgoing>
+    </startEvent>
+    <userTask id="Task_BuatPR" name="Buat &amp; ajukan Purchase Request (PR)">
+      <documentation>Pemohon mengisi form PR (item/jasa, qty, spesifikasi, estimasi harga, tanggal dibutuhkan, justifikasi) lalu submit. Status PR: Draft -&gt; Diajukan.</documentation>
+      <incoming>Flow_01</incoming>
+      <incoming>Flow_06</incoming>
+      <outgoing>Flow_02</outgoing>
+    </userTask>
+    <userTask id="Task_ReviewPR" name="Review PR (kebutuhan &amp; anggaran)">
+      <documentation>Atasan memeriksa kebutuhan dan ketersediaan anggaran departemen, lalu memutuskan setuju, minta revisi, atau tolak.</documentation>
+      <incoming>Flow_02</incoming>
+      <outgoing>Flow_03</outgoing>
+    </userTask>
+    <exclusiveGateway id="Gateway_PRDisetujui" name="PR disetujui?" gatewayDirection="Diverging">
+      <documentation>Keputusan atasan atas PR.</documentation>
+      <incoming>Flow_03</incoming>
+      <outgoing>Flow_04</outgoing>
+      <outgoing>Flow_05</outgoing>
+      <outgoing>Flow_06</outgoing>
+    </exclusiveGateway>
+    <endEvent id="End_PRDitolak" name="PR ditolak">
+      <documentation>PR ditolak, pengadaan dihentikan. Pemohon mendapat notifikasi beserta alasan penolakan.</documentation>
+      <incoming>Flow_05</incoming>
+    </endEvent>
+    <userTask id="Task_VerifikasiPR" name="Verifikasi PR &amp; pilih calon vendor">
+      <documentation>Staf procurement memverifikasi kelengkapan PR, mengecek harga acuan/kontrak, dan memilih calon vendor dari master vendor.</documentation>
+      <incoming>Flow_04</incoming>
+      <outgoing>Flow_07</outgoing>
+    </userTask>
+    <userTask id="Task_BuatKirimRFQ" name="Buat &amp; kirim RFQ ke vendor">
+      <documentation>Membuat Request for Quotation dari PR yang disetujui dan mengirimkannya ke beberapa vendor dengan batas waktu penawaran.</documentation>
+      <incoming>Flow_07</incoming>
+      <outgoing>Flow_08</outgoing>
+    </userTask>
+    <userTask id="Task_VendorPenawaran" name="Terima RFQ &amp; kirim penawaran harga">
+      <documentation>Vendor menerima RFQ dan mengirim penawaran: harga, lead time, syarat pembayaran, masa berlaku.</documentation>
+      <incoming>Flow_08</incoming>
+      <outgoing>Flow_09</outgoing>
+    </userTask>
+    <userTask id="Task_EvaluasiPenawaran" name="Evaluasi penawaran &amp; tetapkan vendor">
+      <documentation>Membandingkan penawaran (harga, kualitas, lead time, syarat) dan menetapkan vendor pemenang beserta alasan pemilihan.</documentation>
+      <incoming>Flow_09</incoming>
+      <outgoing>Flow_10</outgoing>
+    </userTask>
+    <userTask id="Task_BuatPO" name="Buat Purchase Order (PO)">
+      <documentation>Membuat PO dari penawaran pemenang: item, qty, harga final, alamat kirim, jadwal, syarat pembayaran.</documentation>
+      <incoming>Flow_10</incoming>
+      <incoming>Flow_14</incoming>
+      <outgoing>Flow_11</outgoing>
+    </userTask>
+    <userTask id="Task_ReviewPO" name="Review &amp; approve PO">
+      <documentation>Manajer procurement meninjau PO (nilai, vendor, kesesuaian dengan penawaran) dan memutuskan setuju atau revisi.</documentation>
+      <incoming>Flow_11</incoming>
+      <outgoing>Flow_12</outgoing>
+    </userTask>
+    <exclusiveGateway id="Gateway_PODisetujui" name="PO disetujui?" gatewayDirection="Diverging">
+      <documentation>Keputusan manajer procurement atas PO.</documentation>
+      <incoming>Flow_12</incoming>
+      <outgoing>Flow_13</outgoing>
+      <outgoing>Flow_14</outgoing>
+    </exclusiveGateway>
+    <userTask id="Task_KirimPO" name="Kirim PO ke vendor">
+      <documentation>PO yang disetujui diterbitkan dan dikirim ke vendor.</documentation>
+      <incoming>Flow_13</incoming>
+      <outgoing>Flow_15</outgoing>
+    </userTask>
+    <userTask id="Task_VendorKonfirmasiPO" name="Konfirmasi PO &amp; siapkan pesanan">
+      <documentation>Vendor mengonfirmasi PO dan menyiapkan pesanan atau pekerjaan.</documentation>
+      <incoming>Flow_15</incoming>
+      <outgoing>Flow_16</outgoing>
+    </userTask>
+    <userTask id="Task_VendorKirimBarang" name="Kirim barang/jasa + surat jalan">
+      <documentation>Vendor mengirim barang atau menyelesaikan jasa disertai surat jalan/BAST dan invoice.</documentation>
+      <incoming>Flow_16</incoming>
+      <incoming>Flow_21</incoming>
+      <outgoing>Flow_17</outgoing>
+    </userTask>
+    <manualTask id="Task_TerimaBarang" name="Terima barang/jasa &amp; cek fisik (QC)">
+      <documentation>Petugas gudang memeriksa kesesuaian barang/jasa dengan PO dan surat jalan (jumlah, kondisi, spesifikasi). Proses internal gudang di luar scope aplikasi.</documentation>
+      <incoming>Flow_17</incoming>
+      <outgoing>Flow_18</outgoing>
+    </manualTask>
+    <exclusiveGateway id="Gateway_BarangSesuai" name="Barang/jasa sesuai?" gatewayDirection="Diverging">
+      <documentation>Hasil pemeriksaan penerimaan.</documentation>
+      <incoming>Flow_18</incoming>
+      <outgoing>Flow_19</outgoing>
+      <outgoing>Flow_20</outgoing>
+    </exclusiveGateway>
+    <userTask id="Task_ReturKomplain" name="Proses retur/komplain ke vendor">
+      <documentation>Procurement mencatat ketidaksesuaian (retur/komplain) dan meminta vendor mengirim ulang atau memperbaiki.</documentation>
+      <incoming>Flow_20</incoming>
+      <outgoing>Flow_21</outgoing>
+    </userTask>
+    <userTask id="Task_BuatGR" name="Buat Goods Receipt (GR)">
+      <documentation>Mencatat penerimaan terhadap PO: qty diterima, tanggal, penerima.</documentation>
+      <incoming>Flow_19</incoming>
+      <outgoing>Flow_22</outgoing>
+    </userTask>
+    <userTask id="Task_TutupPO" name="Update status PO &amp; tutup pengadaan">
+      <documentation>Procurement memverifikasi GR, memperbarui status PO menjadi selesai dan mengarsipkan dokumen. Pembayaran di luar scope.</documentation>
+      <incoming>Flow_22</incoming>
+      <outgoing>Flow_23</outgoing>
+    </userTask>
+    <endEvent id="End_Selesai" name="Pengadaan selesai: barang/jasa diterima di gudang">
+      <documentation>Barang/jasa sudah diterima di gudang dan pengadaan ditutup.</documentation>
+      <incoming>Flow_23</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_01" sourceRef="Start_Kebutuhan" targetRef="Task_BuatPR" />
+    <sequenceFlow id="Flow_02" sourceRef="Task_BuatPR" targetRef="Task_ReviewPR" />
+    <sequenceFlow id="Flow_03" sourceRef="Task_ReviewPR" targetRef="Gateway_PRDisetujui" />
+    <sequenceFlow id="Flow_04" name="Disetujui" sourceRef="Gateway_PRDisetujui" targetRef="Task_VerifikasiPR" />
+    <sequenceFlow id="Flow_05" name="Ditolak" sourceRef="Gateway_PRDisetujui" targetRef="End_PRDitolak" />
+    <sequenceFlow id="Flow_06" name="Perlu revisi" sourceRef="Gateway_PRDisetujui" targetRef="Task_BuatPR" />
+    <sequenceFlow id="Flow_07" sourceRef="Task_VerifikasiPR" targetRef="Task_BuatKirimRFQ" />
+    <sequenceFlow id="Flow_08" sourceRef="Task_BuatKirimRFQ" targetRef="Task_VendorPenawaran" />
+    <sequenceFlow id="Flow_09" sourceRef="Task_VendorPenawaran" targetRef="Task_EvaluasiPenawaran" />
+    <sequenceFlow id="Flow_10" sourceRef="Task_EvaluasiPenawaran" targetRef="Task_BuatPO" />
+    <sequenceFlow id="Flow_11" sourceRef="Task_BuatPO" targetRef="Task_ReviewPO" />
+    <sequenceFlow id="Flow_12" sourceRef="Task_ReviewPO" targetRef="Gateway_PODisetujui" />
+    <sequenceFlow id="Flow_13" name="Disetujui" sourceRef="Gateway_PODisetujui" targetRef="Task_KirimPO" />
+    <sequenceFlow id="Flow_14" name="Perlu revisi" sourceRef="Gateway_PODisetujui" targetRef="Task_BuatPO" />
+    <sequenceFlow id="Flow_15" sourceRef="Task_KirimPO" targetRef="Task_VendorKonfirmasiPO" />
+    <sequenceFlow id="Flow_16" sourceRef="Task_VendorKonfirmasiPO" targetRef="Task_VendorKirimBarang" />
+    <sequenceFlow id="Flow_17" sourceRef="Task_VendorKirimBarang" targetRef="Task_TerimaBarang" />
+    <sequenceFlow id="Flow_18" sourceRef="Task_TerimaBarang" targetRef="Gateway_BarangSesuai" />
+    <sequenceFlow id="Flow_19" name="Sesuai" sourceRef="Gateway_BarangSesuai" targetRef="Task_BuatGR" />
+    <sequenceFlow id="Flow_20" name="Tidak sesuai" sourceRef="Gateway_BarangSesuai" targetRef="Task_ReturKomplain" />
+    <sequenceFlow id="Flow_21" name="Kirim ulang" sourceRef="Task_ReturKomplain" targetRef="Task_VendorKirimBarang" />
+    <sequenceFlow id="Flow_22" sourceRef="Task_BuatGR" targetRef="Task_TutupPO" />
+    <sequenceFlow id="Flow_23" sourceRef="Task_TutupPO" targetRef="End_Selesai" />
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Procurement">
+    <bpmndi:BPMNPlane id="BPMNPlane_Procurement" bpmnElement="Collaboration_Procurement">
+      <bpmndi:BPMNShape id="Participant_Procurement_di" bpmnElement="Participant_Procurement" isHorizontal="true">
+        <omgdc:Bounds x="40" y="60" width="2820" height="960" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Pemohon_di" bpmnElement="Lane_Pemohon" isHorizontal="true">
+        <omgdc:Bounds x="70" y="60" width="2790" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Atasan_di" bpmnElement="Lane_Atasan" isHorizontal="true">
+        <omgdc:Bounds x="70" y="220" width="2790" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ManajerProc_di" bpmnElement="Lane_ManajerProc" isHorizontal="true">
+        <omgdc:Bounds x="70" y="380" width="2790" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_StafProc_di" bpmnElement="Lane_StafProc" isHorizontal="true">
+        <omgdc:Bounds x="70" y="540" width="2790" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Vendor_di" bpmnElement="Lane_Vendor" isHorizontal="true">
+        <omgdc:Bounds x="70" y="700" width="2790" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Gudang_di" bpmnElement="Lane_Gudang" isHorizontal="true">
+        <omgdc:Bounds x="70" y="860" width="2790" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Kebutuhan_di" bpmnElement="Start_Kebutuhan">
+        <omgdc:Bounds x="182" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="145" y="164" width="110" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BuatPR_di" bpmnElement="Task_BuatPR">
+        <omgdc:Bounds x="300" y="105" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ReviewPR_di" bpmnElement="Task_ReviewPR">
+        <omgdc:Bounds x="460" y="265" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PRDisetujui_di" bpmnElement="Gateway_PRDisetujui" isMarkerVisible="true">
+        <omgdc:Bounds x="655" y="275" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="600" y="240" width="70" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_PRDitolak_di" bpmnElement="End_PRDitolak">
+        <omgdc:Bounds x="822" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="785" y="324" width="110" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VerifikasiPR_di" bpmnElement="Task_VerifikasiPR">
+        <omgdc:Bounds x="620" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BuatKirimRFQ_di" bpmnElement="Task_BuatKirimRFQ">
+        <omgdc:Bounds x="780" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VendorPenawaran_di" bpmnElement="Task_VendorPenawaran">
+        <omgdc:Bounds x="940" y="745" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_EvaluasiPenawaran_di" bpmnElement="Task_EvaluasiPenawaran">
+        <omgdc:Bounds x="1100" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BuatPO_di" bpmnElement="Task_BuatPO">
+        <omgdc:Bounds x="1260" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ReviewPO_di" bpmnElement="Task_ReviewPO">
+        <omgdc:Bounds x="1260" y="425" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PODisetujui_di" bpmnElement="Gateway_PODisetujui" isMarkerVisible="true">
+        <omgdc:Bounds x="1455" y="435" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="1400" y="400" width="70" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_KirimPO_di" bpmnElement="Task_KirimPO">
+        <omgdc:Bounds x="1580" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VendorKonfirmasiPO_di" bpmnElement="Task_VendorKonfirmasiPO">
+        <omgdc:Bounds x="1740" y="745" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_VendorKirimBarang_di" bpmnElement="Task_VendorKirimBarang">
+        <omgdc:Bounds x="1900" y="745" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_TerimaBarang_di" bpmnElement="Task_TerimaBarang">
+        <omgdc:Bounds x="2060" y="905" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_BarangSesuai_di" bpmnElement="Gateway_BarangSesuai" isMarkerVisible="true">
+        <omgdc:Bounds x="2255" y="915" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="2200" y="880" width="70" height="28" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ReturKomplain_di" bpmnElement="Task_ReturKomplain">
+        <omgdc:Bounds x="2220" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BuatGR_di" bpmnElement="Task_BuatGR">
+        <omgdc:Bounds x="2380" y="905" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_TutupPO_di" bpmnElement="Task_TutupPO">
+        <omgdc:Bounds x="2540" y="585" width="120" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Selesai_di" bpmnElement="End_Selesai">
+        <omgdc:Bounds x="2742" y="602" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="2705" y="644" width="110" height="42" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_01_di" bpmnElement="Flow_01">
+        <omgdi:waypoint x="218" y="140" />
+        <omgdi:waypoint x="300" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02_di" bpmnElement="Flow_02">
+        <omgdi:waypoint x="420" y="140" />
+        <omgdi:waypoint x="440" y="140" />
+        <omgdi:waypoint x="440" y="300" />
+        <omgdi:waypoint x="460" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03_di" bpmnElement="Flow_03">
+        <omgdi:waypoint x="580" y="300" />
+        <omgdi:waypoint x="655" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04_di" bpmnElement="Flow_04">
+        <omgdi:waypoint x="680" y="325" />
+        <omgdi:waypoint x="680" y="585" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="688" y="337" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05_di" bpmnElement="Flow_05">
+        <omgdi:waypoint x="705" y="300" />
+        <omgdi:waypoint x="822" y="300" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="710" y="281" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06_di" bpmnElement="Flow_06">
+        <omgdi:waypoint x="680" y="275" />
+        <omgdi:waypoint x="680" y="85" />
+        <omgdi:waypoint x="360" y="85" />
+        <omgdi:waypoint x="360" y="105" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="688" y="254" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07_di" bpmnElement="Flow_07">
+        <omgdi:waypoint x="740" y="620" />
+        <omgdi:waypoint x="780" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08_di" bpmnElement="Flow_08">
+        <omgdi:waypoint x="900" y="620" />
+        <omgdi:waypoint x="920" y="620" />
+        <omgdi:waypoint x="920" y="780" />
+        <omgdi:waypoint x="940" y="780" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09_di" bpmnElement="Flow_09">
+        <omgdi:waypoint x="1060" y="780" />
+        <omgdi:waypoint x="1080" y="780" />
+        <omgdi:waypoint x="1080" y="620" />
+        <omgdi:waypoint x="1100" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <omgdi:waypoint x="1220" y="620" />
+        <omgdi:waypoint x="1260" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <omgdi:waypoint x="1320" y="585" />
+        <omgdi:waypoint x="1320" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12">
+        <omgdi:waypoint x="1380" y="460" />
+        <omgdi:waypoint x="1455" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <omgdi:waypoint x="1505" y="460" />
+        <omgdi:waypoint x="1542" y="460" />
+        <omgdi:waypoint x="1542" y="620" />
+        <omgdi:waypoint x="1580" y="620" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="1510" y="441" width="60" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14">
+        <omgdi:waypoint x="1480" y="485" />
+        <omgdi:waypoint x="1480" y="620" />
+        <omgdi:waypoint x="1380" y="620" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="1394" y="497" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <omgdi:waypoint x="1700" y="620" />
+        <omgdi:waypoint x="1720" y="620" />
+        <omgdi:waypoint x="1720" y="780" />
+        <omgdi:waypoint x="1740" y="780" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16">
+        <omgdi:waypoint x="1860" y="780" />
+        <omgdi:waypoint x="1900" y="780" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_17_di" bpmnElement="Flow_17">
+        <omgdi:waypoint x="2020" y="780" />
+        <omgdi:waypoint x="2040" y="780" />
+        <omgdi:waypoint x="2040" y="940" />
+        <omgdi:waypoint x="2060" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18_di" bpmnElement="Flow_18">
+        <omgdi:waypoint x="2180" y="940" />
+        <omgdi:waypoint x="2255" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19_di" bpmnElement="Flow_19">
+        <omgdi:waypoint x="2305" y="940" />
+        <omgdi:waypoint x="2380" y="940" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="2310" y="921" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_20_di" bpmnElement="Flow_20">
+        <omgdi:waypoint x="2280" y="915" />
+        <omgdi:waypoint x="2280" y="655" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="2288" y="889" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_21_di" bpmnElement="Flow_21">
+        <omgdi:waypoint x="2220" y="620" />
+        <omgdi:waypoint x="1960" y="620" />
+        <omgdi:waypoint x="1960" y="745" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="2054" y="601" width="72" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_22_di" bpmnElement="Flow_22">
+        <omgdi:waypoint x="2500" y="940" />
+        <omgdi:waypoint x="2520" y="940" />
+        <omgdi:waypoint x="2520" y="620" />
+        <omgdi:waypoint x="2540" y="620" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_23_di" bpmnElement="Flow_23">
+        <omgdi:waypoint x="2660" y="620" />
+        <omgdi:waypoint x="2742" y="620" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

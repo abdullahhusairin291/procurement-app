@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}{{ 'Tambah' if creating else 'Ubah' }} pengguna{% endblock %}
+{% block content %}
+<h4>{{ 'Tambah' if creating else 'Ubah' }} pengguna</h4>
+<div class="row"><div class="col-lg-6">
+<form method="post" class="card card-body mb-3">
+  {{ csrf() }}
+  <div class="mb-3"><label class="form-label">Username</label>
+    <input class="form-control" name="username" value="{{ user.username or '' }}" {% if not creating %}disabled{% else %}required{% endif %}></div>
+  {% if creating %}
+  <div class="mb-3"><label class="form-label">Password awal (min. 8 karakter)</label><input class="form-control" type="password" name="password" required></div>
+  {% endif %}
+  <div class="mb-3"><label class="form-label">Nama lengkap</label><input class="form-control" name="full_name" value="{{ user.full_name or '' }}" required></div>
+  <div class="mb-3"><label class="form-label">Email</label><input class="form-control" name="email" value="{{ user.email or '' }}"></div>
+  <div class="mb-3"><label class="form-label">Role</label>
+    <select class="form-select" name="role" required>
+      {% for code, label in roles.items() %}<option value="{{ code }}" {{ 'selected' if user.role == code }}>{{ label }}</option>{% endfor %}
+    </select></div>
+  <div class="mb-3"><label class="form-label">Departemen</label>
+    <select class="form-select" name="department_id"><option value="">-</option>
+      {% for d in departments %}<option value="{{ d.id }}" {{ 'selected' if user.department_id == d.id }}>{{ d.name }}</option>{% endfor %}
+    </select></div>
+  <div class="mb-3"><label class="form-label">Atasan (khusus Pemohon)</label>
+    <select class="form-select" name="supervisor_id"><option value="">-</option>
+      {% for s in supervisors %}<option value="{{ s.id }}" {{ 'selected' if user.supervisor_id == s.id }}>{{ s.full_name }}</option>{% endfor %}
+    </select></div>
+  <div class="mb-3"><label class="form-label">Vendor (khusus akun Vendor)</label>
+    <select class="form-select" name="vendor_id"><option value="">-</option>
+      {% for v in vendors %}<option value="{{ v.id }}" {{ 'selected' if user.vendor_id == v.id }}>{{ v.name }}</option>{% endfor %}
+    </select></div>
+  <div class="mb-3"><label class="form-label">Gudang (khusus Petugas Gudang)</label>
+    <select class="form-select" name="warehouse_id"><option value="">-</option>
+      {% for w in warehouses %}<option value="{{ w.id }}" {{ 'selected' if user.warehouse_id == w.id }}>{{ w.name }}</option>{% endfor %}
+    </select></div>
+  {% if not creating %}
+  <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="active" id="active" {{ 'checked' if user.active }}><label class="form-check-label" for="active">Akun aktif</label></div>
+  {% endif %}
+  <div><button class="btn btn-primary">Simpan</button> <a class="btn btn-link" href="{{ url_for('users.index') }}">Batal</a></div>
+</form>
+{% if not creating %}
+<form method="post" action="{{ url_for('users.reset_password', user_id=user.id) }}" class="card card-body">
+  {{ csrf() }}
+  <h6>Reset password</h6>
+  <div class="input-group"><input class="form-control" type="password" name="new_password" placeholder="Password baru (min. 8 karakter)" required>
+  <button class="btn btn-outline-danger">Reset</button></div>
+</form>
+{% endif %}
+</div></div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Verifikasi PR & RFQ{% endblock %}
+{% block content %}
+<h4>Verifikasi {{ pr.number }} dan buat RFQ</h4>
+<form method="post">
+{{ csrf() }}
+<div class="card mb-3"><div class="card-header">1. Verifikasi kelengkapan PR dan harga acuan</div>
+<table class="table table-sm mb-0"><thead><tr><th>Barang/Jasa</th><th class="text-end">Qty</th><th class="text-end">Est. harga PR</th><th class="text-end">Harga acuan</th><th></th></tr></thead><tbody>
+{% for i in pr.items %}
+  <tr><td>{{ i.item.name }}</td><td class="text-end">{{ i.qty|qty }} {{ i.item.unit.name }}</td><td class="text-end">{{ i.est_price|rupiah }}</td><td class="text-end">{{ i.item.ref_price|rupiah }}</td>
+  <td>{% if i.item.ref_price and i.est_price * 10 > i.item.ref_price * 11 %}<span class="badge text-bg-warning">di atas acuan &gt;10%</span>{% endif %}</td></tr>
+{% endfor %}</tbody></table>
+<div class="card-body row g-3">
+  <div class="col-md-4"><label class="form-label">Metode pengadaan</label><select class="form-select" name="method">{% for m in methods %}<option>{{ m }}</option>{% endfor %}</select></div>
+  <div class="col-md-8"><label class="form-label">Catatan verifikasi</label><input class="form-control" name="verification_note"></div>
+  <div class="col-12 form-check ms-2"><input class="form-check-input" type="checkbox" name="verified" id="verified"><label class="form-check-label" for="verified">PR sudah saya periksa (kelengkapan, spesifikasi, harga acuan)</label></div>
+</div></div>
+<div class="card mb-3"><div class="card-header">2. Pilih calon vendor (disarankan minimal 3)</div><div class="card-body">
+  {% for v in vendors %}
+  <div class="form-check"><input class="form-check-input" type="checkbox" name="vendor_id" value="{{ v.id }}" id="v{{ v.id }}" {{ 'checked' if v.id in suggested }}>
+    <label class="form-check-label" for="v{{ v.id }}">{{ v.name }} <small class="text-muted">({{ v.category.name if v.category else 'tanpa kategori' }}){% if v.id in suggested %} - sesuai kategori{% endif %}</small></label></div>
+  {% endfor %}
+</div></div>
+<div class="card mb-3"><div class="card-header">3. Batas waktu dan syarat</div><div class="card-body row g-3">
+  <div class="col-md-4"><label class="form-label">Batas waktu penawaran *</label><input class="form-control" type="datetime-local" name="deadline" required></div>
+  <div class="col-md-8"><label class="form-label">Syarat dan ketentuan</label><textarea class="form-control" name="terms" rows="2"></textarea></div>
+</div></div>
+<button class="btn btn-primary">Buat RFQ (Draft)</button> <a class="btn btn-link" href="{{ url_for('pr.detail', pr_id=pr.id) }}">Batal</a>
+</form>
+{% endblock %}

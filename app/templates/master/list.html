@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, empty %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>{{ cfg.title }}</h4>
+  {% if can_edit %}<a class="btn btn-primary" href="{{ url_for('master.entity_new', entity=entity) }}">Tambah</a>{% endif %}</div>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr>
+    {% for path, label in cfg.columns %}<th>{{ label.split('|')[0] }}</th>{% endfor %}
+    {% if entity == 'budgets' %}<th>Terpakai</th><th>Sisa</th>{% endif %}
+    {% if cfg.has_active %}<th>Status</th>{% endif %}<th></th>
+  </tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      {% for path, label in cfg.columns %}
+        {% set v = cell(r, path) %}
+        <td>{% if '|money' in label %}{{ v|rupiah }}{% else %}{{ v if v is not none else '-' }}{% endif %}</td>
+      {% endfor %}
+      {% if entity == 'budgets' %}<td>{{ usage[r.id][0]|rupiah }}</td><td>{{ usage[r.id][1]|rupiah }}</td>{% endif %}
+      {% if cfg.has_active %}<td>{% if r.active %}<span class="badge text-bg-success">Aktif</span>{% else %}<span class="badge text-bg-secondary">Nonaktif</span>{% endif %}</td>{% endif %}
+      <td class="text-end text-nowrap">
+        {% if can_edit %}
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('master.entity_edit', entity=entity, obj_id=r.id) }}">Ubah</a>
+        {% if cfg.has_active %}
+        <form method="post" action="{{ url_for('master.entity_toggle', entity=entity, obj_id=r.id) }}" class="d-inline">{{ csrf() }}
+          <button class="btn btn-sm btn-outline-secondary">{{ 'Nonaktifkan' if r.active else 'Aktifkan' }}</button></form>
+        {% endif %}
+        {% if entity == 'vendors' %}<a class="btn btn-sm btn-outline-success" href="{{ url_for('users.vendor_account', vendor_id=r.id) }}">Akun login</a>{% endif %}
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}{{ empty(10) }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

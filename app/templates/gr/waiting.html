@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}Menunggu penerimaan{% endblock %}
+{% block content %}
+<h4 class="mb-3">PO menunggu penerimaan - {{ current_user.warehouse.name }}</h4>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>PO</th><th>Vendor</th><th>Surat jalan</th><th>Estimasi tiba</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for p in rows %}<tr><td>{{ p.number }}</td><td>{{ p.vendor.name }}</td><td>{{ p.delivery_note_no or '-' }}</td><td>{{ p.eta|tgl }}</td><td>{{ badge(p.status) }}</td>
+    <td><a class="btn btn-sm btn-primary" href="{{ url_for('gr.receive', po_id=p.id) }}">Periksa &amp; terima</a></td></tr>
+  {% else %}{{ empty(6, 'Tidak ada PO yang menunggu penerimaan.') }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

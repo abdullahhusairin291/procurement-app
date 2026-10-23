@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge, history_table %}
+{% block title %}Review {{ pr.number }}{% endblock %}
+{% block content %}
+<h4>Review {{ pr.number }} {{ badge(pr.status) }}</h4>
+<div class="text-muted mb-3">{{ pr.requester.full_name }} &middot; {{ pr.department.name }} &middot; dibutuhkan {{ pr.needed_date|tgl }}</div>
+<div class="row g-3"><div class="col-lg-8">
+  <div class="card mb-3"><div class="card-body"><strong>Justifikasi:</strong> {{ pr.justification }}</div></div>
+  <div class="card mb-3"><table class="table table-sm mb-0">
+    <thead><tr><th>Barang/Jasa</th><th>Spesifikasi</th><th class="text-end">Qty</th><th class="text-end">Est. harga</th><th class="text-end">Subtotal</th></tr></thead>
+    <tbody>{% for i in pr.items %}<tr><td>{{ i.item.name }}</td><td>{{ i.spec or '-' }}</td><td class="text-end">{{ i.qty|qty }} {{ i.item.unit.name }}</td><td class="text-end">{{ i.est_price|rupiah }}</td><td class="text-end">{{ i.subtotal|rupiah }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><th colspan="4" class="text-end">Total</th><th class="text-end">{{ pr.total|rupiah }}</th></tr></tfoot></table></div>
+  <div class="card"><div class="card-header">Riwayat approval</div><div class="card-body p-0">{{ history_table(history) }}</div></div>
+</div>
+<div class="col-lg-4">
+  <div class="card mb-3"><div class="card-header">Anggaran {{ pr.department.name }} {{ pr.period }}</div><div class="card-body small">
+    {% if budget[0] is none %}<span class="text-danger">Belum ditetapkan.</span>{% else %}
+    Pagu: {{ budget[0]|rupiah }}<br>Terpakai: {{ budget[1]|rupiah }}<br><strong>Sisa: {{ budget[2]|rupiah }}</strong>
+    {% if pr.total > budget[2] %}<div class="text-danger mt-1">Total PR melebihi sisa anggaran.</div>{% endif %}{% endif %}</div></div>
+  {% if pr.status == C.PR_SUBMITTED %}
+  <form method="post" class="card card-body">
+    {{ csrf() }}
+    <label class="form-label">Catatan (wajib untuk revisi/tolak)</label>
+    <textarea class="form-control mb-3" name="note" rows="3"></textarea>
+    <button class="btn btn-success mb-2" name="decision" value="setuju">Setujui</button>
+    <button class="btn btn-warning mb-2" name="decision" value="revisi">Minta revisi</button>
+    <button class="btn btn-danger" name="decision" value="tolak" onclick="return confirm('Tolak PR ini? Proses akan dihentikan.')">Tolak</button>
+  </form>
+  {% else %}<div class="alert alert-info">PR ini sudah diputuskan.</div>{% endif %}
+  <a class="btn btn-link" href="{{ url_for('approval.pr_queue') }}">Kembali ke antrian</a>
+</div></div>
+{% endblock %}

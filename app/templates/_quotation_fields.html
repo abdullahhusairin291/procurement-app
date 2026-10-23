@@ -1,0 +1,19 @@
+{# Isian penawaran bersama (portal vendor, input staf, dan hasil OCR). Variabel: rfq, prefill, matched (opsional). #}
+<div class="table-responsive"><table class="table table-sm align-middle">
+  <thead><tr><th>Barang/Jasa</th><th class="text-end">Qty</th><th>Harga satuan (Rp)</th>{% if matched is defined %}<th>Terbaca dari dokumen</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for ri in rfq.items %}
+    <tr><td>{{ ri.item.name }}<div class="small text-muted">{{ ri.spec or '' }}</div></td>
+      <td class="text-end">{{ ri.qty|qty }} {{ ri.item.unit.name }}</td>
+      <td><input class="form-control form-control-sm" style="max-width:200px" name="price_{{ ri.id }}" inputmode="decimal" value="{{ prefill.prices[ri.id] }}"></td>
+      {% if matched is defined %}<td class="small">{% if ri.id in matched %}{{ matched[ri.id][0].name }} ({{ matched[ri.id][0].qty|qty }} {{ matched[ri.id][0].unit }}) &middot; kemiripan {{ (matched[ri.id][1]*100)|round|int }}%{% else %}<span class="text-danger">tidak ditemukan</span>{% endif %}</td>{% endif %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><label class="form-label">Lead time (hari)</label><input class="form-control" name="lead_time_days" inputmode="numeric" value="{{ prefill.lead_time }}"></div>
+  <div class="col-md-5"><label class="form-label">Syarat pembayaran</label><input class="form-control" name="payment_terms" value="{{ prefill.payment_terms }}"></div>
+  <div class="col-md-4"><label class="form-label">Masa berlaku sampai</label><input class="form-control" type="date" name="valid_until" value="{{ prefill.valid_until }}"></div>
+  <div class="col-12"><label class="form-label">Catatan</label><textarea class="form-control" name="notes" rows="2">{{ prefill.notes }}</textarea></div>
+</div>

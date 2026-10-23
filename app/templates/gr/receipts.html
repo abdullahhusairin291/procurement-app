@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}Riwayat GR{% endblock %}
+{% block content %}
+<h4 class="mb-3">Goods Receipt</h4>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>GR</th><th>PO</th><th>Vendor</th><th>Tanggal terima</th><th>Penerima</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for g in rows %}<tr><td><a href="{{ url_for('gr.detail', gr_id=g.id) }}">{{ g.number }}</a></td><td>{{ g.po.number }}</td><td>{{ g.po.vendor.name }}</td><td>{{ g.received_date|tgl }}</td><td>{{ g.received_by.full_name }}</td><td>{{ badge(g.status) }}</td></tr>
+  {% else %}{{ empty(6) }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

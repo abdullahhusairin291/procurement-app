@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge %}
+{% block title %}{{ po.number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>{{ po.number }} {{ badge(po.status) }}</h4>
+  <a class="btn btn-sm btn-outline-secondary" target="_blank" href="{{ url_for('po.pdf', po_id=po.id) }}">Cetak PDF</a></div>
+<div class="row g-3"><div class="col-lg-7">
+  <div class="card mb-3"><div class="card-body small">Gudang tujuan: <strong>{{ po.warehouse.name }}</strong>, {{ po.warehouse.address }}<br>
+    Jadwal kirim diminta: {{ po.delivery_date|tgl }} &middot; Syarat bayar: {{ po.payment_terms or '-' }}<br>{% if po.notes %}Catatan: {{ po.notes }}{% endif %}</div></div>
+  <div class="card mb-3"><table class="table table-sm mb-0"><thead><tr><th>Barang/Jasa</th><th class="text-end">Qty</th><th class="text-end">Harga</th><th class="text-end">Subtotal</th></tr></thead><tbody>
+    {% for i in po.items %}<tr><td>{{ i.item.name }}</td><td class="text-end">{{ i.qty|qty }} {{ i.item.unit.name }}</td><td class="text-end">{{ i.unit_price|rupiah }}</td><td class="text-end">{{ i.subtotal|rupiah }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end">{{ po.total|rupiah }}</th></tr></tfoot></table></div>
+  {% if po.confirmed_at %}<div class="card mb-3"><div class="card-body small">Dikonfirmasi {{ po.confirmed_at|tglwaktu }}; jadwal kirim Anda {{ po.promised_date|tgl }}.{% if po.delivery_note_no %}<br>Surat jalan <strong>{{ po.delivery_note_no }}</strong>, estimasi tiba {{ po.eta|tgl }}.{% endif %}</div></div>{% endif %}
+  {% for c in po.complaints %}<div class="alert alert-{{ 'danger' if c.status != C.C_RESENT else 'secondary' }}"><strong>Komplain ({{ c.status }}):</strong> {{ c.reason }}
+    {% if c.followup_note %}<br><small>Tindak lanjut procurement: {{ c.followup_note }}</small>{% endif %}
+    {% if c.evidence_path %}<br><a href="{{ url_for('main.attachment', kind='complaint', obj_id=c.id) }}">Bukti</a>{% endif %}</div>{% endfor %}
+</div><div class="col-lg-5">
+  {% if po.status == C.PO_ISSUED %}
+  <form method="post" action="{{ url_for('vendor.po_confirm', po_id=po.id) }}" class="card card-body">
+    {{ csrf() }}<h6>Konfirmasi PO</h6>
+    <div class="mb-3"><label class="form-label">Jadwal kirim yang dijanjikan *</label><input class="form-control" type="date" name="promised_date" min="{{ min_date }}" required></div>
+    <div class="mb-3"><label class="form-label">Catatan</label><textarea class="form-control" name="note" rows="2"></textarea></div>
+    <button class="btn btn-primary">Konfirmasi kesanggupan</button></form>
+  {% elif po.status == C.PO_CONFIRMED %}
+  <form method="post" action="{{ url_for('vendor.po_ship', po_id=po.id) }}" class="card card-body">
+    {{ csrf() }}<h6>Info pengiriman</h6>
+    <div class="mb-3"><label class="form-label">Nomor surat jalan *</label><input class="form-control" name="delivery_note_no" required></div>
+    <div class="mb-3"><label class="form-label">Estimasi tiba *</label><input class="form-control" type="date" name="eta" min="{{ min_date }}" required></div>
+    <button class="btn btn-primary">Tandai dikirim</button></form>
+  {% elif open_complaint %}
+  <form method="post" action="{{ url_for('vendor.po_resend', po_id=po.id) }}" class="card card-body">
+    {{ csrf() }}<h6>Kirim ulang / perbaikan</h6>
+    <div class="mb-3"><label class="form-label">Nomor surat jalan baru *</label><input class="form-control" name="delivery_note_no" required></div>
+    <div class="mb-3"><label class="form-label">Estimasi tiba *</label><input class="form-control" type="date" name="eta" min="{{ min_date }}" required></div>
+    <div class="mb-3"><label class="form-label">Catatan</label><textarea class="form-control" name="note" rows="2"></textarea></div>
+    <button class="btn btn-primary">Kirim ulang</button></form>
+  {% endif %}
+  <a class="btn btn-link" href="{{ url_for('vendor.po_index') }}">Kembali</a>
+</div></div>
+{% endblock %}

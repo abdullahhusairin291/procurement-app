@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, post_button, history_table %}
+{% block title %}{{ po.number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div><h4 class="mb-1">{{ po.number }} {{ badge(po.status) }}</h4>
+    <div class="text-muted">Vendor {{ po.vendor.name }} &middot; PR <a href="{{ url_for('pr.detail', pr_id=po.pr_id) }}">{{ po.pr.number }}</a> &middot; RFQ <a href="{{ url_for('rfq.detail', rfq_id=po.rfq_id) }}">{{ po.rfq.number }}</a></div></div>
+  <div>
+    <a class="btn btn-sm btn-outline-secondary" target="_blank" href="{{ url_for('po.pdf', po_id=po.id) }}">Cetak PDF</a>
+    {% if current_user.role == C.SP %}
+      {% if po.status in (C.PO_DRAFT, C.PO_REVISION) %}
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('po.edit', po_id=po.id) }}">Ubah</a>
+        {{ post_button(url_for('po.submit', po_id=po.id), 'Ajukan ke manajer' if po.status == C.PO_DRAFT else 'Ajukan ulang') }}
+      {% elif po.status == C.PO_APPROVED %}{{ post_button(url_for('po.issue', po_id=po.id), 'Terbitkan & kirim ke vendor', 'btn-success') }}
+      {% elif po.status == C.PO_RECEIVED %}{{ post_button(url_for('po.close', po_id=po.id), 'Verifikasi GR & tutup PO', 'btn-success', 'Tutup PO ini?') }}{% endif %}
+    {% endif %}
+    {% if current_user.role == C.MP and po.status == C.PO_WAITING %}<a class="btn btn-sm btn-primary" href="{{ url_for('approval.po_review', po_id=po.id) }}">Tinjau</a>{% endif %}
+  </div>
+</div>
+{% set last = history[-1] if history else none %}
+{% if po.status == C.PO_REVISION and last %}<div class="alert alert-warning"><strong>Catatan manajer:</strong> {{ last.note }}</div>{% endif %}
+<div class="row g-3"><div class="col-lg-8">
+  <div class="card mb-3"><div class="card-body small">Gudang: {{ po.warehouse.name }} &middot; Jadwal kirim: {{ po.delivery_date|tgl }} &middot; Syarat bayar: {{ po.payment_terms or '-' }}<br>
+    {% if po.confirmed_at %}Vendor konfirmasi {{ po.confirmed_at|tglwaktu }}, janji kirim {{ po.promised_date|tgl }}.<br>{% endif %}
+    {% if po.delivery_note_no %}Surat jalan <strong>{{ po.delivery_note_no }}</strong>, estimasi tiba {{ po.eta|tgl }}.<br>{% endif %}
+    {% if po.notes %}Catatan: {{ po.notes }}{% endif %}</div></div>
+  <div class="card mb-3"><table class="table table-sm mb-0"><thead><tr><th>Barang/Jasa</th><th class="text-end">Qty PO</th><th class="text-end">Diterima (sesuai)</th><th class="text-end">Harga</th><th class="text-end">Subtotal</th></tr></thead><tbody>
+    {% for i in po.items %}<tr><td>{{ i.item.name }}</td><td class="text-end">{{ i.qty|qty }} {{ i.item.unit.name }}</td><td class="text-end">{{ i.accepted_qty|qty }}</td><td class="text-end">{{ i.unit_price|rupiah }}</td><td class="text-end">{{ i.subtotal|rupiah }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><th colspan="4" class="text-end">Total</th><th class="text-end">{{ po.total|rupiah }}</th></tr></tfoot></table></div>
+  <div class="card mb-3"><div class="card-header">Riwayat approval</div><div class="card-body p-0">{{ history_table(history) }}</div></div>
+</div><div class="col-lg-4">
+  <div class="card mb-3"><div class="card-header">Penerimaan (GR)</div><ul class="list-group list-group-flush">
+    {% for g in po.receipts %}<li class="list-group-item"><a href="{{ url_for('gr.detail', gr_id=g.id) }}">{{ g.number }}</a> {{ badge(g.status) }}<div class="small text-muted">{{ g.received_date|tgl }}</div></li>{% else %}<li class="list-group-item text-muted">Belum ada.</li>{% endfor %}</ul></div>
+  <div class="card"><div class="card-header">Komplain/retur</div><ul class="list-group list-group-flush">
+    {% for c in po.complaints %}<li class="list-group-item"><a href="{{ url_for('gr.complaint_detail', complaint_id=c.id) }}">{{ c.created_at|tgl }}</a> {{ badge(c.status) }}</li>{% else %}<li class="list-group-item text-muted">Tidak ada.</li>{% endfor %}</ul></div>
+</div></div>
+{% endblock %}

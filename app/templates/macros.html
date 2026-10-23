@@ -1,0 +1,24 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro badge(status) %}<span class="badge text-bg-{{ status_color(status) }}">{{ status }}</span>{% endmacro %}
+
+{% macro post_button(url, label, cls='btn-primary', confirm=None) %}
+<form method="post" action="{{ url }}" class="d-inline"{% if confirm %} onsubmit="return confirm('{{ confirm }}')"{% endif %}>
+  {{ csrf() }}<button class="btn btn-sm {{ cls }}">{{ label }}</button>
+</form>
+{% endmacro %}
+
+{% macro history_table(history) %}
+{% if history %}
+<table class="table table-sm mb-0">
+  <thead><tr><th>Waktu</th><th>Oleh</th><th>Keputusan</th><th>Catatan</th></tr></thead>
+  <tbody>
+  {% for h in history %}
+    <tr><td>{{ h.created_at|tglwaktu }}</td><td>{{ h.actor.full_name }}</td><td>{{ badge(h.decision) if h.decision in ('Disetujui',) else h.decision }}</td><td>{{ h.note or '-' }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p class="text-muted mb-0">Belum ada keputusan.</p>{% endif %}
+{% endmacro %}
+
+{% macro empty(cols, text='Tidak ada data.') %}<tr><td colspan="{{ cols }}" class="text-center text-muted py-4">{{ text }}</td></tr>{% endmacro %}

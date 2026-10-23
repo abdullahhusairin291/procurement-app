@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Akun vendor{% endblock %}
+{% block content %}
+<h4>Akun login untuk {{ vendor.name }}</h4>
+<div class="row"><div class="col-lg-5">
+  <h6>Akun yang sudah ada</h6>
+  <ul>{% for u in existing %}<li>{{ u.username }} {% if not u.active %}<span class="badge text-bg-secondary">nonaktif</span>{% endif %}</li>{% else %}<li class="text-muted">Belum ada.</li>{% endfor %}</ul>
+  <form method="post" class="card card-body">
+    {{ csrf() }}
+    <div class="mb-3"><label class="form-label">Username</label><input class="form-control" name="username" required></div>
+    <div class="mb-3"><label class="form-label">Nama lengkap</label><input class="form-control" name="full_name" value="{{ vendor.contact_name or vendor.name }}"></div>
+    <div class="mb-3"><label class="form-label">Password awal (min. 8 karakter)</label><input class="form-control" type="password" name="password" required></div>
+    <button class="btn btn-primary">Buat akun</button>
+    <a class="btn btn-link" href="{{ url_for('master.entity_list', entity='vendors') }}">Kembali</a>
+  </form>
+</div></div>
+{% endblock %}

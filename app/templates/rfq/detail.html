@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, post_button %}
+{% block title %}{{ rfq.number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <div><h4 class="mb-1">{{ rfq.number }} {{ badge(rfq.status) }}</h4>
+    <div class="text-muted">PR <a href="{{ url_for('pr.detail', pr_id=rfq.pr_id) }}">{{ rfq.pr.number }}</a> &middot; batas penawaran {{ rfq.deadline|tglwaktu }}</div></div>
+  <div>
+    {% if current_user.role == C.SP and rfq.status == C.RFQ_DRAFT %}{{ post_button(url_for('rfq.send', rfq_id=rfq.id), 'Kirim ke vendor') }}{% endif %}
+    {% if rfq.quotations %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('rfq.compare', rfq_id=rfq.id) }}">Bandingkan penawaran</a>{% endif %}
+    {% if current_user.role == C.SP and rfq.status == C.RFQ_WINNER and not po %}<a class="btn btn-sm btn-success" href="{{ url_for('po.new', rfq_id=rfq.id) }}">Buat PO</a>{% endif %}
+    {% if po %}<a class="btn btn-sm btn-outline-dark" href="{{ url_for('po.detail', po_id=po.id) }}">Lihat PO {{ po.number }}</a>{% endif %}
+  </div>
+</div>
+<div class="row g-3"><div class="col-lg-6">
+  <div class="card mb-3"><div class="card-header">Item</div><table class="table table-sm mb-0"><thead><tr><th>Barang/Jasa</th><th>Spesifikasi</th><th class="text-end">Qty</th></tr></thead><tbody>
+    {% for i in rfq.items %}<tr><td>{{ i.item.name }}</td><td>{{ i.spec or '-' }}</td><td class="text-end">{{ i.qty|qty }} {{ i.item.unit.name }}</td></tr>{% endfor %}</tbody></table></div>
+  <div class="card"><div class="card-body small"><strong>Syarat:</strong> {{ rfq.terms or '-' }}
+    {% if rfq.win_reason %}<hr><strong>Alasan pemenang:</strong> {{ rfq.win_reason }}{% endif %}</div></div>
+</div><div class="col-lg-6">
+  <div class="card"><div class="card-header">Vendor dan penawaran</div><table class="table table-sm mb-0"><thead><tr><th>Vendor</th><th>Penawaran</th><th></th></tr></thead><tbody>
+    {% for rv in rfq.vendors %}{% set q = quote_by_vendor.get(rv.vendor_id) %}
+    <tr><td>{{ rv.vendor.name }}</td>
+      <td>{% if q %}{{ badge(q.status) }} {{ q.total|rupiah }} <small class="text-muted">({{ q.entered_via }}){% if not q.is_complete %} <span class="badge text-bg-warning">tidak lengkap</span>{% endif %}</small>{% else %}<span class="text-muted">Belum ada</span>{% endif %}</td>
+      <td class="text-end text-nowrap">{% if current_user.role == C.SP and can_quote %}
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('rfq.quotation', rfq_id=rfq.id, vendor_id=rv.vendor_id) }}">Input manual</a>
+        <a class="btn btn-sm btn-outline-info" href="{{ url_for('ocr.upload', rfq_id=rfq.id) }}">OCR</a>{% endif %}
+        {% if q and q.attachment_path %}<a href="{{ url_for('main.attachment', kind='quotation', obj_id=q.id) }}">lampiran</a>{% endif %}</td></tr>
+    {% endfor %}</tbody></table></div>
+</div></div>
+{% endblock %}

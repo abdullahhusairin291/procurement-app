@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Input penawaran{% endblock %}
+{% block content %}
+<h4>Input penawaran {{ rv.vendor.name }}</h4>
+<div class="text-muted mb-3">{{ rfq.number }} &middot; diinput staf atas nama vendor. Harga kosong berarti item tidak ditawarkan (penawaran ditandai tidak lengkap).</div>
+<form method="post" enctype="multipart/form-data" class="card card-body">
+  {{ csrf() }}
+  <input type="hidden" name="via" value="Staf">
+  {% include "_quotation_fields.html" %}
+  <div class="mb-3"><label class="form-label">Lampiran (PDF/PNG/JPG, opsional)</label><input class="form-control" type="file" name="attachment" accept=".pdf,.png,.jpg,.jpeg"></div>
+  <div><button class="btn btn-primary">Simpan penawaran</button> <a class="btn btn-link" href="{{ url_for('rfq.detail', rfq_id=rfq.id) }}">Batal</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge, history_table %}
+{% block title %}Review {{ po.number }}{% endblock %}
+{% block content %}
+<h4>Review {{ po.number }} {{ badge(po.status) }}</h4>
+<div class="text-muted mb-3">Vendor: {{ po.vendor.name }} &middot; Gudang: {{ po.warehouse.name }} &middot; kirim {{ po.delivery_date|tgl }} &middot; ref PR {{ po.pr.number }}</div>
+<div class="row g-3"><div class="col-lg-8">
+  <div class="card mb-3"><table class="table table-sm mb-0">
+    <thead><tr><th>Barang/Jasa</th><th class="text-end">Qty</th><th class="text-end">Harga</th><th class="text-end">Subtotal</th></tr></thead>
+    <tbody>{% for i in po.items %}<tr><td>{{ i.item.name }}</td><td class="text-end">{{ i.qty|qty }} {{ i.item.unit.name }}</td><td class="text-end">{{ i.unit_price|rupiah }}</td><td class="text-end">{{ i.subtotal|rupiah }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><th colspan="3" class="text-end">Total</th><th class="text-end">{{ po.total|rupiah }}</th></tr></tfoot></table></div>
+  <div class="card mb-3"><div class="card-body small"><strong>Alasan memilih vendor:</strong> {{ po.rfq.win_reason }}<br>
+    <strong>Syarat bayar:</strong> {{ po.payment_terms or '-' }}<br><strong>Catatan:</strong> {{ po.notes or '-' }}<br>
+    <a href="{{ url_for('rfq.compare', rfq_id=po.rfq_id) }}">Lihat perbandingan penawaran</a></div></div>
+  <div class="card"><div class="card-header">Riwayat approval</div><div class="card-body p-0">{{ history_table(history) }}</div></div>
+</div>
+<div class="col-lg-4">
+  {% if po.status == C.PO_WAITING %}
+  <form method="post" class="card card-body">
+    {{ csrf() }}
+    <label class="form-label">Catatan (wajib untuk revisi)</label>
+    <textarea class="form-control mb-3" name="note" rows="3"></textarea>
+    <button class="btn btn-success mb-2" name="decision" value="setuju">Setujui</button>
+    <button class="btn btn-warning" name="decision" value="revisi">Minta revisi</button>
+  </form>
+  {% else %}<div class="alert alert-info">PO ini sudah diputuskan.</div>{% endif %}
+  <a class="btn btn-link" href="{{ url_for('approval.po_queue') }}">Kembali ke antrian</a>
+</div></div>
+{% endblock %}

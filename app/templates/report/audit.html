@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "macros.html" import empty %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<h4 class="mb-3">Audit log</h4>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-2"><input class="form-control" name="user" placeholder="Username" value="{{ f.get('user','') }}"></div>
+  <div class="col-md-2"><input class="form-control" name="action" placeholder="Aksi" value="{{ f.get('action','') }}"></div>
+  <div class="col-md-2"><input class="form-control" type="date" name="date_from" value="{{ f.get('date_from','') }}"></div>
+  <div class="col-md-2"><input class="form-control" type="date" name="date_to" value="{{ f.get('date_to','') }}"></div>
+  <div class="col-md-2"><button class="btn btn-outline-primary">Filter</button></div>
+</form>
+<table class="table table-sm bg-white"><thead><tr><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Entitas</th><th>Detail</th></tr></thead><tbody>
+  {% for a in rows %}<tr><td class="text-nowrap">{{ a.created_at|tglwaktu }}</td><td>{{ a.username or '-' }}</td><td>{{ a.action }}</td><td>{{ a.entity or '-' }} {{ a.entity_id or '' }}</td><td>{{ a.detail or '' }}</td></tr>
+  {% else %}{{ empty(5) }}{% endfor %}</tbody></table>
+<div class="text-muted small">Menampilkan maksimal 500 entri terbaru.</div>
+{% endblock %}

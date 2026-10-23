@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}Daftar PR{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>Purchase Request</h4>
+  {% if current_user.role == C.PM %}<a class="btn btn-primary" href="{{ url_for('pr.new') }}">Buat PR</a>{% endif %}</div>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-2"><input class="form-control" name="q" placeholder="Cari nomor/justifikasi" value="{{ f.get('q','') }}"></div>
+  <div class="col-md-2"><select class="form-select" name="status"><option value="">Semua status</option>
+    {% for s in statuses %}<option {{ 'selected' if f.get('status') == s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select class="form-select" name="department_id"><option value="">Semua departemen</option>
+    {% for d in departments %}<option value="{{ d.id }}" {{ 'selected' if f.get('department_id') == d.id|string }}>{{ d.name }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><input class="form-control" type="date" name="date_from" value="{{ f.get('date_from','') }}"></div>
+  <div class="col-md-2"><input class="form-control" type="date" name="date_to" value="{{ f.get('date_to','') }}"></div>
+  <div class="col-md-2"><button class="btn btn-outline-primary">Filter</button> <a class="btn btn-link" href="{{ url_for('pr.index') }}">Reset</a></div>
+</form>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>Nomor</th><th>Tanggal</th><th>Pemohon</th><th>Departemen</th><th>Dibutuhkan</th><th class="text-end">Total</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="{{ url_for('pr.detail', pr_id=r.id) }}">{{ r.number }}</a></td>
+      <td>{{ r.created_at|tgl }}</td><td>{{ r.requester.full_name }}</td><td>{{ r.department.name }}</td>
+      <td>{{ r.needed_date|tgl }}</td><td class="text-end">{{ r.total|rupiah }}</td><td>{{ badge(r.status) }}</td>
+    </tr>
+  {% else %}{{ empty(7) }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

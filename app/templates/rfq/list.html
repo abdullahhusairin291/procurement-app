@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge, empty %}
+{% block title %}RFQ{% endblock %}
+{% block content %}
+<h4 class="mb-3">Request for Quotation</h4>
+<div class="card mb-4"><div class="card-header">PR disetujui, siap diverifikasi dan dibuatkan RFQ</div>
+<table class="table table-sm mb-0"><thead><tr><th>PR</th><th>Pemohon</th><th>Departemen</th><th class="text-end">Total</th><th></th></tr></thead><tbody>
+  {% for p in waiting %}<tr><td><a href="{{ url_for('pr.detail', pr_id=p.id) }}">{{ p.number }}</a></td><td>{{ p.requester.full_name }}</td><td>{{ p.department.name }}</td><td class="text-end">{{ p.total|rupiah }}</td>
+    <td>{% if current_user.role == C.SP %}<a class="btn btn-sm btn-success" href="{{ url_for('rfq.new', pr_id=p.id) }}">Verifikasi &amp; buat RFQ</a>{% endif %}</td></tr>
+  {% else %}{{ empty(5, 'Tidak ada PR yang menunggu.') }}{% endfor %}
+</tbody></table></div>
+<table class="table table-sm table-hover bg-white">
+  <thead><tr><th>RFQ</th><th>PR</th><th>Batas penawaran</th><th>Vendor</th><th>Penawaran masuk</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for r in rows %}<tr><td><a href="{{ url_for('rfq.detail', rfq_id=r.id) }}">{{ r.number }}</a></td><td>{{ r.pr.number }}</td><td>{{ r.deadline|tglwaktu }}</td>
+    <td>{{ r.vendors|length }}</td><td>{{ r.quotations|length }}</td><td>{{ badge(r.status) }}</td></tr>
+  {% else %}{{ empty(6) }}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

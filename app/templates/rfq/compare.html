@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, badge %}
+{% block title %}Perbandingan penawaran{% endblock %}
+{% block content %}
+<h4>Perbandingan penawaran {{ rfq.number }} {{ badge(rfq.status) }}</h4>
+<div class="text-muted mb-3">Sel hijau = harga/total terendah. Baris kuning = penawaran tidak lengkap. <a href="{{ url_for('rfq.detail', rfq_id=rfq.id) }}">Kembali ke RFQ</a></div>
+{% if not quotes %}<div class="alert alert-info">Belum ada penawaran masuk.</div>{% else %}
+<form method="post" action="{{ url_for('rfq.winner', rfq_id=rfq.id) }}">
+{{ csrf() }}
+<div class="table-responsive"><table class="table table-bordered bg-white align-middle">
+  <thead><tr><th>Item</th><th class="text-end">Qty</th>
+    {% for q in quotes %}<th class="text-center">{{ q.vendor.name }}<div>{{ badge(q.status) }}</div></th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for ri in rfq.items %}
+    <tr><td>{{ ri.item.name }}</td><td class="text-end">{{ ri.qty|qty }} {{ ri.item.unit.name }}</td>
+      {% for q in quotes %}{% set qi = q.price_for(ri.id) %}
+        <td class="text-end {% if qi and qi.unit_price == lowest_item[ri.id] %}lowest{% elif not qi %}incomplete{% endif %}">
+          {% if qi %}{{ qi.unit_price|rupiah }}<div class="small text-muted">{{ qi.subtotal|rupiah }}</div>{% else %}<span class="text-muted">tidak ditawarkan</span>{% endif %}</td>
+      {% endfor %}</tr>
+  {% endfor %}
+    <tr class="table-light fw-bold"><td colspan="2" class="text-end">Total</td>
+      {% for q in quotes %}<td class="text-end {% if q.is_complete and q.total == lowest_total %}lowest{% endif %} {% if not q.is_complete %}incomplete{% endif %}">{{ q.total|rupiah }}{% if not q.is_complete %}<div class="small">tidak lengkap</div>{% endif %}</td>{% endfor %}</tr>
+    <tr><td colspan="2" class="text-end">Lead time</td>{% for q in quotes %}<td class="text-center">{{ q.lead_time_days ~ ' hari' if q.lead_time_days is not none else '-' }}</td>{% endfor %}</tr>
+    <tr><td colspan="2" class="text-end">Syarat bayar</td>{% for q in quotes %}<td class="text-center">{{ q.payment_terms or '-' }}</td>{% endfor %}</tr>
+    <tr><td colspan="2" class="text-end">Berlaku sampai</td>{% for q in quotes %}<td class="text-center">{{ q.valid_until|tgl }}</td>{% endfor %}</tr>
+    <tr><td colspan="2" class="text-end">Diinput via</td>{% for q in quotes %}<td class="text-center">{{ q.entered_via }}</td>{% endfor %}</tr>
+    {% if can_choose %}<tr><td colspan="2" class="text-end">Pilih pemenang</td>{% for q in quotes %}<td class="text-center"><input type="radio" class="form-check-input" name="quotation_id" value="{{ q.id }}" {{ 'disabled' if not q.is_complete }}></td>{% endfor %}</tr>{% endif %}
+  </tbody>
+</table></div>
+{% if no_quote %}<p class="text-muted">Belum menawar: {{ no_quote|map(attribute='name')|join(', ') }}</p>{% endif %}
+{% if can_choose %}
+<div class="card card-body"><label class="form-label">Alasan pemilihan vendor *</label><textarea class="form-control mb-3" name="reason" rows="2"></textarea>
+  <div><button class="btn btn-success">Tetapkan pemenang</button></div></div>
+{% elif rfq.win_reason %}<div class="alert alert-success"><strong>Alasan pemenang:</strong> {{ rfq.win_reason }}</div>{% endif %}
+</form>{% endif %}
+{% endblock %}
